@@ -1,0 +1,182 @@
+// WhatsApp Chatbot Builder for Small Shops
+// Production-grade Prisma schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+model Shop {
+  id             String   @id @default(cuid())
+  name           String
+  type           String   @default("kirana") // kirana, tailor, tutor, restaurant, pharmacy, salon, bakery
+  whatsappNumber String
+  ownerName      String
+  description    String?
+  address        String?
+  hours          String?
+  currency       String   @default("₹")
+  language       String   @default("en")
+  isOpen         Boolean  @default(true)
+  primaryColor   String   @default("#16a34a")
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+
+  categories    Category[]
+  products      Product[]
+  customers     Customer[]
+  conversations Conversation[]
+  orders        Order[]
+  flowNodes     FlowNode[]
+}
+
+model Category {
+  id        String   @id @default(cuid())
+  name      String
+  emoji     String?
+  shopId    String
+  shop      Shop     @relation(fields: [shopId], references: [id], onDelete: Cascade)
+  products  Product[]
+  createdAt DateTime @default(now())
+
+  @@index([shopId])
+}
+
+model Product {
+  id          String   @id @default(cuid())
+  name        String
+  description String?
+  price       Float
+  unit        String?
+  categoryId  String?
+  category    Category? @relation(fields: [categoryId], references: [id], onDelete: SetNull)
+  shopId      String
+  shop        Shop     @relation(fields: [shopId], references: [id], onDelete: Cascade)
+  isAvailable Boolean  @default(true)
+  imageUrl    String?
+  tags        String?  // comma-separated
+  orderItems  OrderItem[]
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@index([shopId])
+  @@index([categoryId])
+}
+
+model FlowNode {
+  id        String   @id @default(cuid())
+  shopId    String
+  shop      Shop     @relation(fields: [shopId], references: [id], onDelete: Cascade)
+  type      String   // start, message, menu, question, collect, branch, place_order, end
+  title     String
+  data      String   // JSON-encoded payload
+  positionX Float    @default(0)
+  positionY Float    @default(0)
+  isStart   Boolean  @default(false)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([shopId])
+}
+
+model FlowEdge {
+  id           String   @id @default(cuid())
+  shopId       String
+  sourceNodeId String
+  targetNodeId String
+  label        String?
+  condition    String? // for branch nodes, e.g., "yes", "no", or "option_1"
+  createdAt    DateTime @default(now())
+
+  @@index([shopId])
+  @@index([sourceNodeId])
+}
+
+model Customer {
+  id        String   @id @default(cuid())
+  shopId    String
+  shop      Shop     @relation(fields: [shopId], references: [id], onDelete: Cascade)
+  name      String
+  phone     String
+  email     String?
+  notes     String?
+  tags      String?
+  createdAt DateTime @default(now())
+
+  conversations Conversation[]
+  orders        Order[]
+
+  @@index([shopId])
+  @@index([phone])
+}
+
+model Conversation {
+  id          String   @id @default(cuid())
+  shopId      String
+  shop        Shop     @relation(fields: [shopId], references: [id], onDelete: Cascade)
+  customerId  String
+  customer    Customer @relation(fields: [customerId], references: [id], onDelete: Cascade)
+  status      String   @default("active") // active, resolved, abandoned
+  currentNodeId String? // flow context
+  context     String?  // JSON: collected vars, cart, etc.
+  messages    Message[]
+  orders      Order[]
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@index([shopId])
+  @@index([customerId])
+}
+
+model Message {
+  id             String   @id @default(cuid())
+  conversationId String
+  conversation   Conversation @relation(fields: [conversationId], references: [id], onDelete: Cascade)
+  sender         String   // customer, bot, shop
+  text           String
+  type           String   @default("text") // text, menu, image, order, system
+  metadata       String?  // JSON
+  createdAt      DateTime @default(now())
+
+  @@index([conversationId])
+}
+
+model Order {
+  id             String   @id @default(cuid())
+  shopId         String
+  shop           Shop     @relation(fields: [shopId], references: [id], onDelete: Cascade)
+  customerId     String
+  customer       Customer @relation(fields: [customerId], references: [id], onDelete: Cascade)
+  conversationId String?
+  conversation   Conversation? @relation(fields: [conversationId], references: [id])
+  status         String   @default("pending") // pending, confirmed, preparing, ready, delivered, cancelled
+  total          Float
+  notes          String?
+  type           String   @default("delivery") // delivery, pickup
+  address        String?
+  items          OrderItem[]
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+
+  @@index([shopId])
+  @@index([customerId])
+  @@index([status])
+}
+
+model OrderItem {
+  id        String   @id @default(cuid())
+  orderId   String
+  order     Order    @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  productId String?
+  product   Product? @relation(fields: [productId], references: [id], onDelete: SetNull)
+  name      String
+  price     Float
+  quantity  Int
+  total     Float
+
+  @@index([orderId])
+}
