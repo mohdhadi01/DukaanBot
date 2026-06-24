@@ -15,10 +15,18 @@ import {
   X,
   Sparkles,
   RefreshCw,
+  HelpCircle,
 } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+} from '@/components/ui/dialog'
 import { useToast } from '@/hooks/use-toast'
 
 const NAV: { id: ViewName; label: string; icon: any; description: string }[] = [
@@ -38,6 +46,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
   const [mobileOpen, setMobileOpen] = useState(false)
   const [pendingOrders, setPendingOrders] = useState(0)
   const [activeConversations, setActiveConversations] = useState(0)
+  const [helpOpen, setHelpOpen] = useState(false)
   const { toast } = useToast()
 
   useEffect(() => {
@@ -138,6 +147,9 @@ export function AppShell({ children }: { children: React.ReactNode }) {
               <Sparkles className="h-3.5 w-3.5" />
               <span className="hidden sm:inline">Load Demo</span>
             </Button>
+            <Button onClick={() => setHelpOpen(true)} variant="ghost" size="icon" className="h-8 w-8" aria-label="Help">
+              <HelpCircle className="h-4 w-4" />
+            </Button>
           </div>
         </div>
       </header>
@@ -187,6 +199,63 @@ export function AppShell({ children }: { children: React.ReactNode }) {
 
         {/* Main content */}
         <main className="flex-1 min-w-0 overflow-x-hidden">{children}</main>
+      </div>
+
+      {/* Help dialog */}
+      <Dialog open={helpOpen} onOpenChange={setHelpOpen}>
+        <DialogContent className="max-w-lg max-h-[85vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <HelpCircle className="h-4 w-4 text-emerald-600" />
+              How DukaanBot Works
+            </DialogTitle>
+            <DialogDescription>A 60-second tour of your shop&apos;s WhatsApp chatbot builder</DialogDescription>
+          </DialogHeader>
+          <div className="space-y-4 text-sm py-2">
+            <HelpItem
+              num="1"
+              title="Build your menu"
+              body="Go to Menu Builder and add products with prices, units, and categories. Customers will see these when they message you on WhatsApp."
+            />
+            <HelpItem
+              num="2"
+              title="Design the auto-reply flow"
+              body="In Flow Builder, drag steps onto the canvas. Connect them by dragging from the dark circle on a step's right side. Click a connection line to label it or set a branching condition. The default flow already handles: welcome → menu choice → ordering → address → order placement."
+            />
+            <HelpItem
+              num="3"
+              title="Test the bot in Inbox"
+              body="Click 'New' in Inbox to start a test chat. Type 'Hi' and the bot will walk you through the flow exactly like a real customer. Try sending '1' to pick menu options, item numbers like '1, 5' to add to cart, '0' to checkout, and 'confirm' to place an order."
+            />
+            <HelpItem
+              num="4"
+              title="Fulfill orders"
+              body="Orders placed through the bot appear in the Orders view. Click an order to see details and advance it through the pipeline: Pending → Confirmed → Preparing → Ready → Delivered."
+            />
+            <HelpItem
+              num="5"
+              title="Personalize with variables"
+              body="Use {{name}}, {{shopName}}, {{address}} etc. in Message and End steps. The bot fills these in automatically from what customers shared earlier in the flow."
+            />
+            <div className="bg-emerald-50 border border-emerald-200 rounded-lg p-3 text-xs text-emerald-800">
+              <strong>💡 Tip:</strong> The 'Load Demo' button (top right) resets everything to a sample kirana store with 25 products, demo orders, and a ready-to-use flow — great for exploring or starting over.
+            </div>
+          </div>
+        </DialogContent>
+      </Dialog>
+    </div>
+  )
+}
+
+function HelpItem({ num, title, body }: { num: string; title: string; body: string }) {
+  return (
+    <div className="flex gap-3">
+      <div className="h-7 w-7 rounded-full bg-emerald-600 text-white text-xs font-bold flex items-center justify-center shrink-0">
+        {num}
+      </div>
+      <div className="flex-1 min-w-0">
+        <p className="text-sm font-semibold">{title}</p>
+        <p className="text-xs text-muted-foreground mt-0.5 leading-relaxed">{body}</p>
       </div>
     </div>
   )

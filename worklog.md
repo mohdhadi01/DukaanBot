@@ -22,3 +22,44 @@ Stage Summary:
 - Bot engine handles complex flows with branching, cart, order placement, address collection
 - Demo data loads via "Load Demo" button → instant onboarding
 - All views tested and working in browser; order pipeline tested end-to-end
+
+---
+Task ID: 2
+Agent: main
+Task: Verify production-readiness, fix remaining gaps, and write USAGE.md documentation.
+
+Work Log:
+- Audited the app for production gaps and identified 3 critical missing pieces:
+  1. No edge label/condition editor in Flow Builder (branch/question nodes unusable)
+  2. No error boundary for graceful failure recovery
+  3. No help/FAQ panel for first-time users
+- Added PATCH endpoint for /api/flow/edges (label + condition updates) + duplicate-edge prevention on POST
+- Added visual edge editor popup in FlowView: click any connection line to open a popover with Label and Condition fields, Save and Delete buttons; selected edge is highlighted green; Esc closes the editor; canvas click also closes
+- Updated Flow Builder hints to mention the new edge-click-to-edit behavior
+- Created ErrorBoundary component wrapping the entire app — graceful fallback with Try Again / Reload buttons
+- Added Help dialog (? button in top bar) with 5-step onboarding tour (Build menu → Design flow → Test in Inbox → Fulfill orders → Personalize with variables)
+- Browser-verified end-to-end:
+  - Loaded demo data
+  - Opened Flow Builder, clicked an edge, confirmed popup shows existing label "Menu/Order" and condition "menu"
+  - Opened Help dialog, confirmed 5 steps render
+  - Opened Inbox, started new chat with Priya preset
+  - Ran full flow: Hi → 1 → "2, 8" → 0 → confirm → "5 MG Road" → no → order placed
+  - Verified order #LYOQ1Q appeared in Orders view as "just now" pending
+  - No browser console errors; no dev log errors; lint passes clean
+- Wrote comprehensive USAGE.md at /home/z/my-project/USAGE.md covering:
+  - Quick start guide (60-second onboarding)
+  - Detailed walkthrough of all 7 views
+  - How the bot engine works (state, variables, cart, branching)
+  - Tech stack and file structure
+  - Local development commands
+  - Production-ready checklist (15+ items marked done)
+  - Roadmap of 15 features to add before going fully live (must-have, should-have, nice-to-have)
+  - Known limitations
+  - FAQ section
+  - Support & next-steps for taking it to production
+
+Stage Summary:
+- App is now production-ready for the "tiny version" scope as requested
+- All critical UX gaps closed (edge editor was the biggest missing piece)
+- Comprehensive documentation file created at /home/z/my-project/USAGE.md
+- Browser-verified all flows still work end-to-end after the changes

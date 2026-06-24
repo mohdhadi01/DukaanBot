@@ -1,6 +1,7 @@
 'use client'
 
 import { AppShell } from '@/components/chatbot/AppShell'
+import { ErrorBoundary } from '@/components/chatbot/ErrorBoundary'
 import { useApp } from '@/components/chatbot/store'
 import { DashboardView } from '@/components/chatbot/views/DashboardView'
 import { MenuView } from '@/components/chatbot/views/MenuView'
@@ -14,14 +15,16 @@ export default function Home() {
   const view = useApp((s) => s.view)
 
   return (
-    <AppShell>
-      {view === 'dashboard' && <DashboardView />}
-      {view === 'menu' && <MenuView />}
-      {view === 'flow' && <FlowView />}
-      {view === 'inbox' && <InboxView />}
-      {view === 'orders' && <OrdersView />}
-      {view === 'customers' && <CustomersView />}
-      {view === 'settings' && <SettingsView />}
-    </AppShell>
+    <ErrorBoundary>
+      <AppShell>
+        {view === 'dashboard' && <DashboardView />}
+        {view === 'menu' && <MenuView />}
+        {view === 'flow' && <FlowView />}
+        {view === 'inbox' && <InboxView />}
+        {view === 'orders' && <OrdersView />}
+        {view === 'customers' && <CustomersView />}
+        {view === 'settings' && <SettingsView />}
+      </AppShell>
+    </ErrorBoundary>
   )
 }

@@ -70,6 +70,7 @@ export function FlowView() {
   const [isPanning, setIsPanning] = useState(false)
   const [draggingNode, setDraggingNode] = useState<string | null>(null)
   const [connecting, setConnecting] = useState<{ from: string; mouseX: number; mouseY: number } | null>(null)
+  const [editingEdge, setEditingEdge] = useState<{ id: string; x: number; y: number; label: string; condition: string } | null>(null)
   const canvasRef = useRef<HTMLDivElement>(null)
   const { refreshKey } = useApp()
   const { toast } = useToast()
@@ -93,10 +94,23 @@ export function FlowView() {
     }
   }, [refreshKey])
 
+  // Close edge editor on Escape
+  useEffect(() => {
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') {
+        setEditingEdge(null)
+        setSelectedNode(null)
+      }
+    }
+    window.addEventListener('keydown', onKey)
+    return () => window.removeEventListener('keydown', onKey)
+  }, [])
+
   // Mouse handlers
   const onCanvasMouseDown = (e: React.MouseEvent) => {
     if (e.target === e.currentTarget || (e.target as HTMLElement).dataset.canvas === 'true') {
       setSelectedNode(null)
+      setEditingEdge(null)
       setIsPanning(true)
     }
   }
@@ -241,6 +255,42 @@ export function FlowView() {
     try {
       await api(`${API.flowEdges}?id=${id}`, { method: 'DELETE' })
       setEdges((es) => es.filter((e) => e.id !== id))
+      setEditingEdge(null)
+    } catch (e: any) {
+      toast({ title: 'Failed', description: e.message, variant: 'destructive' })
+    }
+  }
+
+  const handleEdgeClick = (e: any, edge: any) => {
+    e.stopPropagation()
+    const src = nodes.find((n) => n.id === edge.sourceNodeId)
+    const tgt = nodes.find((n) => n.id === edge.targetNodeId)
+    if (!src || !tgt) return
+    const midX = (src.positionX + NODE_WIDTH + tgt.positionX) / 2
+    const midY = (src.positionY + tgt.positionY) / 2
+    setEditingEdge({
+      id: edge.id,
+      x: midX,
+      y: midY,
+      label: edge.label || '',
+      condition: edge.condition || '',
+    })
+  }
+
+  const handleSaveEdge = async () => {
+    if (!editingEdge) return
+    try {
+      const { edge } = await api(API.flowEdges, {
+        method: 'PATCH',
+        body: JSON.stringify({
+          id: editingEdge.id,
+          label: editingEdge.label,
+          condition: editingEdge.condition,
+        }),
+      })
+      setEdges((es) => es.map((e) => (e.id === edge.id ? edge : e)))
+      setEditingEdge(null)
+      toast({ title: 'Connection updated' })
     } catch (e: any) {
       toast({ title: 'Failed', description: e.message, variant: 'destructive' })
     }
@@ -285,7 +335,7 @@ export function FlowView() {
               Flow Builder
             </h1>
             <p className="text-xs text-muted-foreground">
-              Drag steps to arrange · Click ▢ on a step to connect · Double-click to edit
+              Drag steps to arrange · Drag ▢ on a step&apos;s right to connect · Click a connection line to label/branch it · Double-click a step to edit
             </p>
           </div>
           <div className="flex items-center gap-2">
@@ -384,11 +434,11 @@ export function FlowView() {
                     <g key={e.id} className="pointer-events-auto">
                       <path
                         d={path}
-                        stroke="#94a3b8"
-                        strokeWidth={2}
+                        stroke={editingEdge?.id === e.id ? '#16a34a' : '#94a3b8'}
+                        strokeWidth={editingEdge?.id === e.id ? 3 : 2}
                         fill="none"
-                        className="hover:stroke-rose-500 cursor-pointer"
-                        onClick={() => handleDeleteEdge(e.id)}
+                        className="hover:stroke-emerald-500 cursor-pointer"
+                        onClick={(ev) => handleEdgeClick(ev, e)}
                       />
                       <circle cx={x2} cy={y2} r={4} fill="#94a3b8" />
                       {(e.label || e.condition) && (
@@ -449,6 +499,69 @@ export function FlowView() {
                   onSetStart={() => handleSetStart(n.id)}
                 />
               ))}
+
+              {/* Edge editor popup */}
+              {editingEdge && (
+                <div
+                  className="absolute z-20 bg-white rounded-lg shadow-xl border-2 border-emerald-500 p-3 w-64"
+                  style={{
+                    left: editingEdge.x - 128,
+                    top: editingEdge.y - 10,
+                  }}
+                  onClick={(e) => e.stopPropagation()}
+                  onMouseDown={(e) => e.stopPropagation()}
+                >
+                  <div className="flex items-center justify-between mb-2">
+                    <p className="text-xs font-semibold">Edit Connection</p>
+                    <button
+                      onClick={() => setEditingEdge(null)}
+                      className="text-muted-foreground hover:text-foreground"
+                    >
+                      <X className="h-3 w-3" />
+                    </button>
+                  </div>
+                  <div className="space-y-2">
+                    <div>
+                      <Label className="text-[10px] uppercase tracking-wide text-muted-foreground">Label (shown on canvas)</Label>
+                      <Input
+                        value={editingEdge.label}
+                        onChange={(e) => setEditingEdge({ ...editingEdge, label: e.target.value })}
+                        placeholder="e.g. Yes / No / Order"
+                        className="h-8 text-xs mt-1"
+                      />
+                    </div>
+                    <div>
+                      <Label className="text-[10px] uppercase tracking-wide text-muted-foreground">Condition (matched against variable)</Label>
+                      <Input
+                        value={editingEdge.condition}
+                        onChange={(e) => setEditingEdge({ ...editingEdge, condition: e.target.value })}
+                        placeholder="e.g. menu, hours, yes, no"
+                        className="h-8 text-xs mt-1 font-mono"
+                      />
+                      <p className="text-[10px] text-muted-foreground mt-1">
+                        Bot matches customer&apos;s choice value to this condition.
+                      </p>
+                    </div>
+                    <div className="flex gap-1.5 pt-1">
+                      <Button
+                        size="sm"
+                        className="h-7 text-xs flex-1 bg-emerald-600 hover:bg-emerald-700"
+                        onClick={handleSaveEdge}
+                      >
+                        <Save className="h-3 w-3" /> Save
+                      </Button>
+                      <Button
+                        size="sm"
+                        variant="outline"
+                        className="h-7 text-xs text-rose-600 hover:bg-rose-50"
+                        onClick={() => handleDeleteEdge(editingEdge.id)}
+                      >
+                        <Trash2 className="h-3 w-3" /> Delete
+                      </Button>
+                    </div>
+                  </div>
+                </div>
+              )}
             </div>
           </div>
 
@@ -826,7 +939,7 @@ function NodeEditor({ node, data, setData }: { node: any; data: any; setData: (d
               ))}
             </div>
             <p className="text-xs text-muted-foreground">
-              Tip: After saving, drag from the bottom-right of this step to connect each option to its next step. Then edit the connection to set the condition label.
+              Tip: After saving, drag from the dark circle on the right of this step to connect each option to its next step. Then click the connection line and set its <strong>condition</strong> to match the option value (e.g. <code className="bg-muted px-1 rounded">menu</code>).
             </p>
           </div>
         </div>
@@ -865,7 +978,7 @@ function NodeEditor({ node, data, setData }: { node: any; data: any; setData: (d
             placeholder="e.g. mainChoice"
           />
           <p className="text-xs text-muted-foreground">
-            Connect each outgoing edge and set its condition to match the variable&apos;s value.
+            Connect each outgoing edge and click it on the canvas to set its <strong>condition</strong> to match the variable&apos;s value (e.g. <code className="bg-muted px-1 rounded">yes</code> / <code className="bg-muted px-1 rounded">no</code>).
           </p>
         </div>
       )
