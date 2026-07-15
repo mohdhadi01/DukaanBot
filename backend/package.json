@@ -4,8 +4,9 @@
   "private": true,
   "scripts": {
     "dev": "bun --env-file=../.env --watch src/server.ts",
-    "start": "bun --env-file=../.env src/server.ts",
-    "worker:whatsapp": "bun --env-file=../.env scripts/whatsapp-worker.ts"
+    "start": "bun src/server.ts",
+    "worker:dev": "bun --env-file=../.env scripts/whatsapp-worker.ts",
+    "worker:whatsapp": "bun scripts/whatsapp-worker.ts"
   },
   "dependencies": {
     "@hapi/boom": "^10.0.1",

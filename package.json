@@ -10,7 +10,7 @@
     "start": "concurrently \"bun run start:frontend\" \"bun run start:backend\"",
     "start:frontend": "bun run --cwd frontend start",
     "start:backend": "bun run --cwd backend start",
-    "worker:whatsapp": "bun run --cwd backend worker:whatsapp",
+    "worker:whatsapp": "bun run --cwd backend worker:dev",
     "lint": "bun run --cwd frontend lint",
     "install:all": "bun install && bun install --cwd frontend && bun install --cwd backend"
   },
