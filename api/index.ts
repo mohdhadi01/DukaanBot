@@ -7,12 +7,21 @@ type ServerlessHandler = ReturnType<typeof serverless>
 let handler: ServerlessHandler | null = null
 
 export default async function vercelApi(req: VercelRequest, res: VercelResponse) {
-  if (!handler) {
-    const app = await getApp()
-    handler = serverless(app, {
-      binary: ['image/*', 'application/octet-stream'],
+  try {
+    if (!handler) {
+      const app = await getApp()
+      handler = serverless(app, {
+        binary: ['image/*', 'application/octet-stream'],
+      })
+      console.log('Vercel API handler initialized')
+    }
+    return handler(req, res)
+  } catch (error) {
+    console.error('Serverless function error:', error)
+    return res.status(500).json({
+      error: 'Serverless function error',
+      message: error instanceof Error ? error.message : String(error),
+      stack: error instanceof Error ? error.stack : undefined,
     })
-    console.log('Vercel API handler initialized')
   }
-  return handler(req, res)
 }
