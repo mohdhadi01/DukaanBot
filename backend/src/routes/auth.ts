@@ -7,12 +7,25 @@ import { getUserFromRequest } from '../lib/tenant-express'
 
 const router = Router()
 
-const cookieOptions = {
-  httpOnly: true,
-  sameSite: 'lax' as const,
-  secure: process.env.NODE_ENV === 'production',
-  maxAge: 7 * 24 * 60 * 60 * 1000,
-  path: '/',
+function getCookieOptions() {
+  const isProduction = process.env.NODE_ENV === 'production'
+  let crossSite = false
+  try {
+    const frontend = process.env.FRONTEND_URL
+    const api = process.env.APP_URL
+    if (frontend && api) {
+      crossSite = new URL(frontend).origin !== new URL(api).origin
+    }
+  } catch {
+    /* use defaults */
+  }
+  return {
+    httpOnly: true,
+    sameSite: (crossSite && isProduction ? 'none' : 'lax') as 'none' | 'lax',
+    secure: isProduction,
+    maxAge: 7 * 24 * 60 * 60 * 1000,
+    path: '/',
+  }
 }
 
 async function buildTokenForUser(userId: string) {
@@ -28,7 +41,7 @@ async function buildTokenForUser(userId: string) {
 }
 
 function setAuthCookie(res: import('express').Response, token: string) {
-  res.cookie(COOKIE_NAME, token, cookieOptions)
+  res.cookie(COOKIE_NAME, token, getCookieOptions())
 }
 
 router.post('/login', async (req, res) => {

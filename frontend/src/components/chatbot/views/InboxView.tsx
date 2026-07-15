@@ -36,15 +36,15 @@ import { cn } from '@/lib/utils'
 import { useWhatsappStatus } from '@/components/whatsapp/ConnectWhatsApp'
 import Link from 'next/link'
 
-function sortMessages(msgs: { id: string; createdAt: string }[]) {
+function sortMessages<T extends { id: string; createdAt: string }>(msgs: T[]): T[] {
   return [...msgs].sort((a, b) => new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime())
 }
 
-function mergeMessages<T extends { id: string }>(existing: T[], incoming: T[]): T[] {
+function mergeMessages<T extends { id: string; createdAt: string }>(existing: T[], incoming: T[]): T[] {
   const byId = new Map<string, T>()
   for (const msg of existing) byId.set(msg.id, msg)
   for (const msg of incoming) byId.set(msg.id, msg)
-  return sortMessages(Array.from(byId.values()) as T[])
+  return sortMessages(Array.from(byId.values()))
 }
 
 function messagesEqual(a: { id: string; text?: string }[], b: { id: string; text?: string }[]) {

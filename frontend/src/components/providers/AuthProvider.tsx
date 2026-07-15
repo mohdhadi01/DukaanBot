@@ -2,7 +2,9 @@
 
 import { createContext, useCallback, useContext, useEffect, useState } from 'react'
 
-const API_BASE = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:4000'
+const API_BASE =
+  process.env.NEXT_PUBLIC_API_URL ??
+  (process.env.NODE_ENV === 'production' ? '' : 'http://localhost:4000')
 
 export type AuthUser = {
   id: string

@@ -1,0 +1,58 @@
+services:
+  - type: web
+    name: dukaanbot-api
+    runtime: node
+    plan: free
+    rootDir: backend
+    buildCommand: bun install
+    startCommand: bun run start
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: BACKEND_PORT
+        value: 10000
+      - key: MONGODB_URI
+        sync: false
+      - key: JWT_SECRET
+        generateValue: true
+      - key: INTERNAL_API_SECRET
+        generateValue: true
+      - key: SESSION_ENCRYPTION_KEY
+        generateValue: true
+      - key: FRONTEND_URL
+        sync: false
+      - key: APP_URL
+        fromService:
+          type: web
+          name: dukaanbot-api
+          property: host
+      - key: WHATSAPP_WORKER_URL
+        fromService:
+          type: web
+          name: dukaanbot-whatsapp
+          property: host
+
+  - type: web
+    name: dukaanbot-whatsapp
+    runtime: node
+    plan: free
+    rootDir: backend
+    buildCommand: bun install
+    startCommand: bun run worker:whatsapp
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: WHATSAPP_WORKER_PORT
+        value: 10000
+      - key: MONGODB_URI
+        sync: false
+      - key: INTERNAL_API_SECRET
+        fromService:
+          type: web
+          name: dukaanbot-api
+          envVarKey: INTERNAL_API_SECRET
+      - key: APP_URL
+        fromService:
+          type: web
+          name: dukaanbot-api
+          property: host

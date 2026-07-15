@@ -3,16 +3,20 @@
   "version": "0.3.0",
   "private": true,
   "scripts": {
-    "dev": "concurrently \"bun run --cwd frontend dev\" \"bun run --cwd backend dev\"",
+    "dev": "concurrently \"bun run dev:frontend\" \"bun run dev:backend\"",
     "dev:frontend": "bun run --cwd frontend dev",
     "dev:backend": "bun run --cwd backend dev",
     "build": "bun run --cwd frontend build",
-    "start": "concurrently \"bun run --cwd frontend start\" \"bun run --cwd backend start\"",
+    "start": "concurrently \"bun run start:frontend\" \"bun run start:backend\"",
     "start:frontend": "bun run --cwd frontend start",
     "start:backend": "bun run --cwd backend start",
     "worker:whatsapp": "bun run --cwd backend worker:whatsapp",
     "lint": "bun run --cwd frontend lint",
     "install:all": "bun install && bun install --cwd frontend && bun install --cwd backend"
+  },
+  "dependencies": {
+    "@vercel/node": "^5.3.0",
+    "serverless-http": "^3.2.0"
   },
   "devDependencies": {
     "concurrently": "^10.0.3"

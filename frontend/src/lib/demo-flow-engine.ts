@@ -29,6 +29,7 @@ interface ParsedFlowNode {
   title: string
   data: FlowNodeData
   outgoing: ParsedFlowEdge[]
+  isStart?: boolean
 }
 
 interface ParsedFlowEdge {
@@ -73,6 +74,7 @@ function loadFlowGraph(state: DemoState): FlowGraph {
     title: n.title,
     data: (typeof n.data === 'object' ? n.data : {}) as FlowNodeData,
     outgoing: [],
+    isStart: n.isStart,
   }))
 
   const nodeMap = new Map(parsedNodes.map((n) => [n.id, n]))

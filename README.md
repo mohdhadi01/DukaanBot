@@ -183,7 +183,68 @@ The same flow is editable in the **Flow Builder** and testable in the **Inbox** 
 
 ---
 
-## Production build
+## Deploy to production
+
+### Option A — Whole app on Vercel (recommended)
+
+Deploy from the **repo root**. Vercel runs Next.js + Express API on the same domain (`/api/*` → serverless Express, everything else → Next.js).
+
+| Part | On Vercel? | Notes |
+|------|------------|-------|
+| Frontend | Yes | Next.js from `frontend/` |
+| Express API | Yes | Serverless via `api/index.ts` |
+| MongoDB | Atlas | Set `MONGODB_URI` in Vercel env |
+| WhatsApp worker | **No** | Needs Render/Railway — see Option B worker |
+
+1. Push repo to GitHub.
+2. [vercel.com/new](https://vercel.com/new) → import repo.
+3. Leave **Root Directory** empty (repo root). `vercel.json` handles the rest.
+4. Add environment variables in Vercel:
+
+| Variable | Required | Value |
+|----------|----------|-------|
+| `MONGODB_URI` | Yes | MongoDB Atlas connection string |
+| `JWT_SECRET` | Yes | Random 32+ char string |
+| `INTERNAL_API_SECRET` | Yes | Random secret |
+| `SESSION_ENCRYPTION_KEY` | Yes | 32-char key |
+| `FRONTEND_URL` | Yes | `https://your-app.vercel.app` |
+| `APP_URL` | Yes | Same as `FRONTEND_URL` (same-origin API) |
+| `WHATSAPP_WORKER_URL` | Optional | External worker URL if using WhatsApp |
+
+5. Deploy. No `NEXT_PUBLIC_API_URL` needed — frontend calls `/api` on the same domain.
+
+```bash
+npx vercel          # preview
+npx vercel --prod   # production
+```
+
+**Local dev** still uses separate ports (`bun run dev` = frontend :3000 + backend :4000).
+
+**WhatsApp on Vercel:** QR pairing requires the Baileys worker (`bun run worker:whatsapp`) on a host with persistent WebSockets and disk (Render free tier works). Point `WHATSAPP_WORKER_URL` to that service.
+
+---
+
+### Option B — Split deploy (frontend Vercel + backend Render)
+
+Use this if you want the API and WhatsApp worker always running (no serverless cold starts).
+
+| Part | Platform |
+|------|----------|
+| Frontend | Vercel (`frontend/` root directory) |
+| API + WhatsApp worker | Render (`render.yaml` blueprint) |
+| Database | MongoDB Atlas |
+
+Set `NEXT_PUBLIC_API_URL=https://dukaanbot-api.onrender.com` on Vercel and `FRONTEND_URL` on Render.
+
+---
+
+### Demo-only on Vercel
+
+Deploy with no env vars — `/demo` runs entirely in the browser.
+
+---
+
+## Production build (local)
 
 ```bash
 bun run build
