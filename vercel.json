@@ -1,10 +1,9 @@
 {
   "$schema": "https://openapi.vercel.sh/vercel.json",
   "version": 2,
-  "installCommand": "bun run install:all",
-  "buildCommand": "bun run build",
+  "installCommand": "bun install && bun install --cwd backend",
+  "buildCommand": "echo 'No frontend build needed'",
   "builds": [
-    { "src": "frontend/package.json", "use": "@vercel/next" },
     { 
       "src": "api/index.ts", 
       "use": "@vercel/node",
@@ -15,9 +14,7 @@
     }
   ],
   "routes": [
-    { "handle": "filesystem" },
     { "src": "/api/(.*)", "dest": "/api/index.ts" },
-    { "src": "/health", "dest": "/api/index.ts" },
-    { "src": "/(.*)", "dest": "frontend/$1" }
+    { "src": "/health", "dest": "/api/index.ts" }
   ]
 }
