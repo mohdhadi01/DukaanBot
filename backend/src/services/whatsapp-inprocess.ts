@@ -6,6 +6,13 @@ import { Shop, WhatsappSession } from '../models'
 import { handleIncomingWhatsAppMessage } from './bot.service'
 import { upsertWhatsappSession } from './shop.service'
 
+if (false) {
+  require('@whiskeysockets/baileys')
+  require('@whiskeysockets/baileys/WAProto')
+  require('@whiskeysockets/baileys/lib/Utils/auth-utils')
+  require('@whiskeysockets/baileys/lib/Utils/generics')
+}
+
 type StoredAuth = {
   creds: AuthenticationState['creds']
   keys: Record<string, unknown>

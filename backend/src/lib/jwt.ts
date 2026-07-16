@@ -1,5 +1,9 @@
 const COOKIE_NAME = 'auth_token'
 
+if (false) {
+  require('jose')
+}
+
 export function getJwtSecret() {
   const secret =
     process.env.JWT_SECRET ||
