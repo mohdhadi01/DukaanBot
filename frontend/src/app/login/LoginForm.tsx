@@ -1,6 +1,6 @@
 'use client'
 
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import { useRouter, useSearchParams } from 'next/navigation'
 import Link from 'next/link'
 import { MarketingNav, MarketingFooter } from '@/components/marketing/MarketingShell'
@@ -18,8 +18,14 @@ export default function LoginForm() {
   const router = useRouter()
   const params = useSearchParams()
   const { toast } = useToast()
-  const { login } = useAuth()
+  const { login, user } = useAuth()
   const callbackUrl = params.get('callbackUrl') || '/app'
+
+  useEffect(() => {
+    if (user) {
+      router.push(callbackUrl)
+    }
+  }, [user, router, callbackUrl])
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
