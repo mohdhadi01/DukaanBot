@@ -18,10 +18,10 @@ let baileysModule: any = null
 
 async function loadBaileys() {
   if (baileysModule) return baileysModule
-  const baileys = await import('@whiskeysockets/baileys')
-  const { proto } = await import('@whiskeysockets/baileys/WAProto')
-  const { initAuthCreds } = await import('@whiskeysockets/baileys/lib/Utils/auth-utils')
-  const { BufferJSON } = await import('@whiskeysockets/baileys/lib/Utils/generics')
+  const baileys = await eval('import("@whiskeysockets/baileys")')
+  const { proto } = await eval('import("@whiskeysockets/baileys/WAProto")')
+  const { initAuthCreds } = await eval('import("@whiskeysockets/baileys/lib/Utils/auth-utils")')
+  const { BufferJSON } = await eval('import("@whiskeysockets/baileys/lib/Utils/generics")')
   baileysModule = {
     makeWASocket: baileys.default || baileys.makeWASocket,
     DisconnectReason: baileys.DisconnectReason,

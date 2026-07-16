@@ -17,7 +17,7 @@ export type AuthTokenPayload = {
 }
 
 export async function signAuthToken(payload: AuthTokenPayload, expiresIn = '7d') {
-  const { SignJWT } = await import('jose')
+  const { SignJWT } = (await eval('import("jose")')) as typeof import('jose')
   return new SignJWT({ ...payload })
     .setProtectedHeader({ alg: 'HS256' })
     .setIssuedAt()
@@ -27,7 +27,7 @@ export async function signAuthToken(payload: AuthTokenPayload, expiresIn = '7d')
 
 export async function verifyAuthToken(token: string): Promise<AuthTokenPayload | null> {
   try {
-    const { jwtVerify } = await import('jose')
+    const { jwtVerify } = (await eval('import("jose")')) as typeof import('jose')
     const { payload } = await jwtVerify(token, getJwtSecret())
     if (!payload.id || typeof payload.id !== 'string') return null
     return {
