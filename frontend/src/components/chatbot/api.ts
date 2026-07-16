@@ -39,12 +39,19 @@ export async function api<T = any>(url: string, options?: RequestInit): Promise<
     }
   }
 
+  const token = typeof window !== 'undefined' ? localStorage.getItem('auth_token') : null
+  const authHeaders: Record<string, string> = {}
+  if (token) {
+    authHeaders['Authorization'] = `Bearer ${token}`
+  }
+
   const fullUrl = url.startsWith('http') ? url : `${API_BASE}${url}`
   const res = await fetch(fullUrl, {
     ...options,
     credentials: 'include',
     headers: {
       'Content-Type': 'application/json',
+      ...authHeaders,
       ...(options?.headers || {}),
     },
   })

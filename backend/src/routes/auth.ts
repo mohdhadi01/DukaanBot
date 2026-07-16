@@ -45,7 +45,7 @@ router.post('/login', async (req, res) => {
     const token = await buildTokenForUser(String(user._id))
     if (!token) return res.status(500).json({ error: 'Failed to create session' })
     setAuthCookie(res, token)
-    return res.json({ ok: true })
+    return res.json({ ok: true, token })
   } catch (e) {
     return res.status(500).json({ error: e instanceof Error ? e.message : 'Login failed' })
   }
@@ -56,7 +56,7 @@ router.post('/register', async (req, res) => {
     const result = await registerUser(req.body)
     const token = await buildTokenForUser(result.userId)
     if (token) setAuthCookie(res, token)
-    return res.json({ ok: true, ...result })
+    return res.json({ ok: true, token, ...result })
   } catch (e) {
     const msg = e instanceof Error ? e.message : 'Registration failed'
     const status = msg.includes('already exists') ? 409 : msg.includes('Invalid') ? 400 : 500

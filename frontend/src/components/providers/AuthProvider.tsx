@@ -34,7 +34,15 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
   const refresh = useCallback(async () => {
     try {
-      const res = await fetch(`${API_BASE}/api/auth/me`, { credentials: 'include' })
+      const token = typeof window !== 'undefined' ? localStorage.getItem('auth_token') : null
+      const headers: Record<string, string> = {}
+      if (token) {
+        headers['Authorization'] = `Bearer ${token}`
+      }
+      const res = await fetch(`${API_BASE}/api/auth/me`, {
+        headers,
+        credentials: 'include',
+      })
       if (!res.ok) {
         setUser(null)
         return
@@ -71,11 +79,27 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       const data = await res.json().catch(() => ({}))
       throw new Error(data.error || 'Login failed')
     }
+    const data = await res.json()
+    if (data.token) {
+      localStorage.setItem('auth_token', data.token)
+    }
     await refresh()
   }
 
   const logout = async () => {
-    await fetch(`${API_BASE}/api/auth/logout`, { method: 'POST', credentials: 'include' })
+    const token = typeof window !== 'undefined' ? localStorage.getItem('auth_token') : null
+    const headers: Record<string, string> = {}
+    if (token) {
+      headers['Authorization'] = `Bearer ${token}`
+    }
+    await fetch(`${API_BASE}/api/auth/logout`, {
+      method: 'POST',
+      headers,
+      credentials: 'include',
+    })
+    if (typeof window !== 'undefined') {
+      localStorage.removeItem('auth_token')
+    }
     setUser(null)
   }
 
