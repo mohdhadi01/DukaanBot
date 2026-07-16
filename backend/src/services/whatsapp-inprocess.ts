@@ -1,16 +1,7 @@
-import makeWASocket, {
-  DisconnectReason,
-  fetchLatestBaileysVersion,
-  makeCacheableSignalKeyStore,
-  type WASocket,
-} from '@whiskeysockets/baileys'
+import type { WASocket, AuthenticationState, SignalDataSet, SignalDataTypeMap } from '@whiskeysockets/baileys'
 import { Boom } from '@hapi/boom'
 import QRCode from 'qrcode'
 import pino from 'pino'
-import { proto } from '@whiskeysockets/baileys/WAProto'
-import { initAuthCreds } from '@whiskeysockets/baileys/lib/Utils/auth-utils'
-import { BufferJSON } from '@whiskeysockets/baileys/lib/Utils/generics'
-import type { AuthenticationState, SignalDataSet, SignalDataTypeMap } from '@whiskeysockets/baileys/lib/Types'
 import { Shop, WhatsappSession } from '../models'
 import { handleIncomingWhatsAppMessage } from './bot.service'
 import { upsertWhatsappSession } from './shop.service'
@@ -23,6 +14,26 @@ type StoredAuth = {
 const logger = pino({ level: 'silent' })
 const sessions = new Map<string, WASocket>()
 
+let baileysModule: any = null
+
+async function loadBaileys() {
+  if (baileysModule) return baileysModule
+  const baileys = await import('@whiskeysockets/baileys')
+  const { proto } = await import('@whiskeysockets/baileys/WAProto')
+  const { initAuthCreds } = await import('@whiskeysockets/baileys/lib/Utils/auth-utils')
+  const { BufferJSON } = await import('@whiskeysockets/baileys/lib/Utils/generics')
+  baileysModule = {
+    makeWASocket: baileys.default || baileys.makeWASocket,
+    DisconnectReason: baileys.DisconnectReason,
+    fetchLatestBaileysVersion: baileys.fetchLatestBaileysVersion,
+    makeCacheableSignalKeyStore: baileys.makeCacheableSignalKeyStore,
+    proto,
+    initAuthCreds,
+    BufferJSON,
+  }
+  return baileysModule
+}
+
 function keyName(type: keyof SignalDataTypeMap, id: string) {
   return `${type}-${id}`
 }
@@ -34,6 +45,7 @@ function phoneFromJid(jid: string) {
 
 async function loadStoredAuth(shopId: string): Promise<StoredAuth> {
   const session = await WhatsappSession.findOne({ shopId }).lean() as any
+  const { BufferJSON, initAuthCreds } = await loadBaileys()
   if (session?.sessionBlob) {
     try {
       return JSON.parse(session.sessionBlob, BufferJSON.reviver) as StoredAuth
@@ -45,6 +57,7 @@ async function loadStoredAuth(shopId: string): Promise<StoredAuth> {
 }
 
 async function saveStoredAuth(shopId: string, stored: StoredAuth) {
+  const { BufferJSON } = await loadBaileys()
   await WhatsappSession.findOneAndUpdate(
     { shopId },
     { sessionBlob: JSON.stringify(stored, BufferJSON.replacer) },
@@ -63,6 +76,7 @@ async function useMongoAuthState(shopId: string): Promise<{
     keys: {
       get: async <T extends keyof SignalDataTypeMap>(type: T, ids: string[]) => {
         const data: { [id: string]: SignalDataTypeMap[T] } = {}
+        const { proto } = await loadBaileys()
         for (const id of ids) {
           let value = stored.keys[keyName(type, id)] as SignalDataTypeMap[T] | undefined
           if (type === 'app-state-sync-key' && value) {
@@ -126,6 +140,7 @@ export async function connectInProcessWhatsapp(shopId: string) {
   await patchSession(shopId, { status: 'qr_pending', qrDataUrl: null, errorMessage: null })
 
   const { state, saveCreds } = await useMongoAuthState(shopId)
+  const { fetchLatestBaileysVersion, makeWASocket, makeCacheableSignalKeyStore } = await loadBaileys()
   const { version } = await fetchLatestBaileysVersion()
 
   const sock = makeWASocket({
@@ -161,6 +176,7 @@ export async function connectInProcessWhatsapp(shopId: string) {
     }
 
     if (connection === 'close') {
+      const { DisconnectReason } = await loadBaileys()
       const code = (lastDisconnect?.error as Boom)?.output?.statusCode
       const shouldReconnect = code !== DisconnectReason.loggedOut
       sessions.delete(shopId)
