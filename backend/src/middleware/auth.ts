@@ -1,5 +1,5 @@
 import type { Request, Response, NextFunction } from 'express'
-import type { AuthTokenPayload } from '@/lib/jwt'
+import type { AuthTokenPayload } from '../lib/jwt'
 import { getUserFromRequest } from '../lib/tenant-express'
 
 declare module 'express-serve-static-core' {
