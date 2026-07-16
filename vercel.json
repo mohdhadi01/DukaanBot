@@ -1,8 +1,6 @@
 {
   "$schema": "https://openapi.vercel.sh/vercel.json",
   "version": 2,
-  "installCommand": "bun install && bun install --cwd backend",
-  "buildCommand": "echo 'No frontend build needed'",
   "builds": [
     { 
       "src": "api/index.ts", 
