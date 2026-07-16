@@ -9,19 +9,9 @@ const router = Router()
 
 function getCookieOptions() {
   const isProduction = process.env.NODE_ENV === 'production'
-  let crossSite = false
-  try {
-    const frontend = process.env.FRONTEND_URL
-    const api = process.env.APP_URL
-    if (frontend && api) {
-      crossSite = new URL(frontend).origin !== new URL(api).origin
-    }
-  } catch {
-    /* use defaults */
-  }
   return {
     httpOnly: true,
-    sameSite: (crossSite && isProduction ? 'none' : 'lax') as 'none' | 'lax',
+    sameSite: (isProduction ? 'none' : 'lax') as 'none' | 'lax',
     secure: isProduction,
     maxAge: 7 * 24 * 60 * 60 * 1000,
     path: '/',
@@ -75,7 +65,7 @@ router.post('/register', async (req, res) => {
 })
 
 router.post('/logout', (_req, res) => {
-  res.clearCookie(COOKIE_NAME, { path: '/' })
+  res.clearCookie(COOKIE_NAME, getCookieOptions())
   return res.json({ ok: true })
 })
 
