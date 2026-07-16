@@ -20,6 +20,8 @@ export default function AppDashboardPage() {
   const { user, loading } = useAuth()
   const router = useRouter()
 
+  console.log('[AppPage] user:', user, 'loading:', loading)
+
   useEffect(() => {
     if (!loading && !user) {
       router.push('/login?callbackUrl=/app')
