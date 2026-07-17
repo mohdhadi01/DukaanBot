@@ -35,6 +35,9 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const refresh = useCallback(async () => {
     try {
       const token = typeof window !== 'undefined' ? localStorage.getItem('auth_token') : null
+      if (token && typeof document !== 'undefined' && !document.cookie.includes('auth_token=')) {
+        document.cookie = `auth_token=${token}; path=/; max-age=604800; samesite=lax`
+      }
       const headers: Record<string, string> = {}
       if (token) {
         headers['Authorization'] = `Bearer ${token}`
@@ -45,6 +48,10 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       })
       if (!res.ok) {
         setUser(null)
+        if (typeof window !== 'undefined') {
+          localStorage.removeItem('auth_token')
+          document.cookie = 'auth_token=; path=/; expires=Thu, 01 Jan 1970 00:00:00 GMT'
+        }
         return
       }
       const data = await res.json()
@@ -82,6 +89,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     const data = await res.json()
     if (data.token) {
       localStorage.setItem('auth_token', data.token)
+      document.cookie = `auth_token=${data.token}; path=/; max-age=604800; samesite=lax`
     }
     await refresh()
   }
@@ -96,9 +104,11 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       method: 'POST',
       headers,
       credentials: 'include',
-    })
+    }).catch(() => {})
+    
     if (typeof window !== 'undefined') {
       localStorage.removeItem('auth_token')
+      document.cookie = 'auth_token=; path=/; expires=Thu, 01 Jan 1970 00:00:00 GMT'
     }
     setUser(null)
   }
