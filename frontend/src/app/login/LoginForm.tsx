@@ -18,10 +18,10 @@ export default function LoginForm() {
   const router = useRouter()
   const params = useSearchParams()
   const { toast } = useToast()
-  const { login, user, loading } = useAuth()
+  const { login, user, loading: authLoading } = useAuth()
   const callbackUrl = params.get('callbackUrl') || '/app'
 
-  console.log('[LoginForm] user:', user, 'loading:', loading)
+  console.log('[LoginForm] user:', user, 'authLoading:', authLoading)
 
   useEffect(() => {
     if (user) {
