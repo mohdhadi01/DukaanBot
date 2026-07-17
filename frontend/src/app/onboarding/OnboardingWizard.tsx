@@ -100,12 +100,17 @@ export default function OnboardingWizard() {
           whatsappConnected: !!(waForm.whatsappPhoneNumberId && waForm.whatsappAccessToken),
         }
       }
-      await fetch(`${API_BASE}/api/onboarding`, {
+      const resSave = await fetch(`${API_BASE}/api/onboarding`, {
         method: 'PATCH',
         credentials: 'include',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(body),
       })
+      const dataSave = await resSave.json()
+      if (dataSave.token) {
+        localStorage.setItem('auth_token', dataSave.token)
+        document.cookie = `auth_token=${dataSave.token}; path=/; max-age=604800; samesite=lax`
+      }
       setStep(nextStep)
     } catch {
       toast({ title: 'Failed to save', variant: 'destructive' })
@@ -130,12 +135,18 @@ export default function OnboardingWizard() {
           return
         }
       }
-      await fetch(`${API_BASE}/api/onboarding`, {
+      const resOnboarding = await fetch(`${API_BASE}/api/onboarding`, {
         method: 'PATCH',
         credentials: 'include',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ onboardingDone: true, onboardingStep: 5 }),
       })
+      const dataOnboarding = await resOnboarding.json()
+      if (dataOnboarding.token) {
+        localStorage.setItem('auth_token', dataOnboarding.token)
+        document.cookie = `auth_token=${dataOnboarding.token}; path=/; max-age=604800; samesite=lax`
+      }
+      
       updateLocal({ onboardingDone: true })
       toast({ title: "You're all set!", description: 'Welcome to DukaanBot.' })
       router.push('/app')

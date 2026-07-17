@@ -606,7 +606,30 @@ router.patch('/onboarding', requireAuth, async (req, res) => {
   if (body.shop) {
     await Shop.findOneAndUpdate({ userId: req.user!.id, isDemo: false }, body.shop)
   }
-  return res.json({ ok: true, user: user?.toJSON() })
+  
+  if (!user) return res.json({ ok: false })
+  
+  // Issue a new token with updated onboarding status
+  const { signAuthToken } = await import('../lib/jwt')
+  const newToken = await signAuthToken({
+    id: String(user._id),
+    email: user.email,
+    name: user.name,
+    onboardingDone: user.onboardingDone,
+    onboardingStep: user.onboardingStep,
+  })
+  
+  // Set the cookie on the backend domain as well
+  const isProduction = process.env.NODE_ENV === 'production'
+  res.cookie('auth_token', newToken, {
+    httpOnly: true,
+    sameSite: isProduction ? 'none' : 'lax',
+    secure: isProduction,
+    maxAge: 7 * 24 * 60 * 60 * 1000,
+    path: '/',
+  })
+
+  return res.json({ ok: true, user: user.toJSON(), token: newToken })
 })
 
 export default router
