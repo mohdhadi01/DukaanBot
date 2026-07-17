@@ -38,6 +38,11 @@ export default function RegisterPage() {
       })
       const data = await res.json()
       if (!res.ok) throw new Error(data.error || 'Registration failed')
+      
+      if (data.token) {
+        localStorage.setItem('auth_token', data.token)
+        document.cookie = `auth_token=${data.token}; path=/; max-age=604800; samesite=lax`
+      }
 
       await refresh()
       toast({ title: 'Welcome to DukaanBot!', description: 'Your 14-day free trial has started.' })

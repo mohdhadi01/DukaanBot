@@ -43,10 +43,6 @@ export async function proxy(req: NextRequest) {
     return NextResponse.redirect(new URL('/app', req.url))
   }
 
-  if (user && pathname.startsWith('/app') && !user.onboardingDone) {
-    return NextResponse.redirect(new URL('/onboarding', req.url))
-  }
-
   return NextResponse.next()
 }
 
